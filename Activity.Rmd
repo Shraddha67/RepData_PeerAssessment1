@@ -1,0 +1,83 @@
+---
+title: "Activity"
+author: "Shraddha"
+date: "11/05/2020"
+output: html_document
+---
+
+```{r}
+act<-read.csv("C:/Users/Shraddha/Desktop/activity.csv")
+act
+```
+
+```{r}
+dim(act)
+str(act)
+```
+
+```{r}
+sum(is.na(act))
+act<-na.omit(act)
+```
+
+change date type to date class 
+```{r}
+act$date <- as.Date(as.character(act$date))
+```
+
+```{r}
+summary(act)
+```
+
+## What is mean total number of steps taken per day?
+```{r}
+library(ggplot2)
+total_steps <- tapply(act$steps, act$date, FUN=sum)
+qplot(total_steps, binwidth=1000, xlab="total number of steps taken each day")
+mean(total_steps)
+median(total_steps)
+```
+
+## What is the average daily activity pattern?
+```{r}
+library(ggplot2)
+averages <- aggregate(x=list(steps=act$steps), by=list(interval=act$interval),
+                      FUN=mean)
+ggplot(data=averages, aes(x=interval, y=steps)) +
+    geom_line() +
+    xlab("5-minute interval") +
+    ylab("average number of steps taken")
+```
+
+On average across all the days in the dataset, the 5-minute interval contains
+the maximum number of steps?
+```{r}
+averages[which.max(averages$steps),]
+```
+
+## Are there differences in activity patterns between weekdays and weekends?
+First, let's find the day of the week for each measurement in the dataset. In
+this part, we use the dataset with the filled-in values.
+
+```{r}
+weekday_weekend <- function(date) {
+    day <- weekdays(date)
+    if (day %in% c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday"))
+        return("weekday")
+    else if (day %in% c("Saturday", "Sunday"))
+        return("weekend")
+    else
+        stop("invalid date")
+}
+act$date <- as.Date(act$date)
+act$day <- sapply(act$date, FUN=weekday_weekend)
+```
+
+Now, let's make a panel plot containing plots of average number of steps taken
+on weekdays and weekends.
+```{r}
+averages <- aggregate(steps ~ interval + day, data=act, mean)
+ggplot(averages, aes(interval, steps)) + geom_line() + facet_grid(day ~ .) +
+    xlab("5-minute interval") + ylab("Number of steps")
+```
+
